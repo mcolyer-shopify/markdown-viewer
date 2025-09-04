@@ -75,6 +75,21 @@ function setupLinkHandlers() {
   });
 }
 
+async function reloadCurrentFile() {
+  const currentFilePath = localStorage.getItem('lastOpenedFile');
+  if (currentFilePath) {
+    try {
+      await loadFile(currentFilePath);
+      console.log('File reloaded:', currentFilePath);
+    } catch (error) {
+      console.error('Failed to reload file:', error);
+      showError('Failed to reload file: ' + error);
+    }
+  } else {
+    console.log('No file to reload');
+  }
+}
+
 async function restoreLastFile() {
   const lastFilePath = localStorage.getItem('lastOpenedFile');
   if (lastFilePath) {
@@ -95,6 +110,9 @@ function handleKeyDown(event) {
   if ((event.metaKey || event.ctrlKey) && event.key === 'o') {
     event.preventDefault();
     openFile();
+  } else if ((event.metaKey || event.ctrlKey) && event.key === 'r') {
+    event.preventDefault();
+    reloadCurrentFile();
   }
 }
 
