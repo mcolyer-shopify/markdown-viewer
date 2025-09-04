@@ -9,8 +9,8 @@ body {
   padding-right: 5% !important;
 }
 
-/* Make paragraphs wider with reasonable limits */
-p, li {
+/* Make paragraphs and lists wider with reasonable limits */
+p, li, ul, ol {
   width: 80% !important;
   max-width: 1000px !important;
 }
@@ -19,6 +19,26 @@ p, li {
 table {
   width: 90% !important;
   max-width: none !important;
+}
+
+/* Add faint grey lines between table rows */
+table {
+  border-collapse: collapse !important;
+}
+
+table tr {
+  border-bottom: 1px solid #ccc !important;
+}
+
+table tr:last-child {
+  border-bottom: none !important;
+}
+
+table td, table th {
+  border: none !important;
+  border-bottom: inherit !important;
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
 }
 
 /* Reduce top padding and tighten spacing */

@@ -2,6 +2,7 @@ import { marked } from 'https://cdn.jsdelivr.net/npm/marked@16.2.1/+esm';
 
 const { invoke } = window.__TAURI__.core;
 const { open } = window.__TAURI__.dialog;
+const { openPath } = window.__TAURI__.opener;
 
 let contentEl;
 
@@ -36,6 +37,9 @@ async function loadFile(filePath) {
     // Update UI
     contentEl.innerHTML = htmlContent;
     
+    // Add click handlers for external links
+    setupLinkHandlers();
+    
     // Save the file path to local storage for next launch
     localStorage.setItem('lastOpenedFile', filePath);
     
@@ -47,6 +51,28 @@ async function loadFile(filePath) {
 
 function showError(message) {
   contentEl.innerHTML = `<p class="error" style="color: #d32f2f; font-style: italic;">${message}</p>`;
+}
+
+function setupLinkHandlers() {
+  // Find all links in the content
+  const links = contentEl.querySelectorAll('a[href]');
+  
+  links.forEach(link => {
+    link.addEventListener('click', async (event) => {
+      event.preventDefault(); // Prevent default link behavior
+      
+      const href = link.getAttribute('href');
+      
+      try {
+        // Open the link in the system browser
+        await openPath(href);
+      } catch (error) {
+        console.error('Failed to open link:', error);
+        // Fallback: try to open with window.open if opener fails
+        window.open(href, '_blank');
+      }
+    });
+  });
 }
 
 async function restoreLastFile() {
