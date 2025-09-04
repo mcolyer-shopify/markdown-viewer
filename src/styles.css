@@ -1,17 +1,31 @@
 /* Custom styles for Markdown Viewer */
 .content {
-  min-height: 400px;
+  min-height: 100vh;
   line-height: 1.8;
+}
+
+/* Extend content more to the right while keeping left margin */
+body {
+  padding-right: 5% !important;
+}
+
+/* Make paragraphs wider with reasonable limits */
+p, li {
+  width: 80% !important;
+  max-width: 1000px !important;
+}
+
+/* Make tables 90% width */
+table {
+  width: 90% !important;
+  max-width: none !important;
 }
 
 /* Reduce top padding and tighten spacing */
 article {
-  padding-top: 1rem !important;
-}
-
-body {
   padding-top: 0 !important;
 }
+
 
 /* Tighter margins for headings */
 h1, h2, h3, h4, h5, h6 {
@@ -46,7 +60,12 @@ li {
   color: #999;
   font-style: italic;
   text-align: center;
-  margin: 2rem 0;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  max-width: 400px;
 }
 
 /* Dark mode support */

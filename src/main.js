@@ -36,6 +36,9 @@ async function loadFile(filePath) {
     // Update UI
     contentEl.innerHTML = htmlContent;
     
+    // Save the file path to local storage for next launch
+    localStorage.setItem('lastOpenedFile', filePath);
+    
   } catch (error) {
     console.error('Error loading file:', error);
     showError('Failed to load file: ' + error);
@@ -44,6 +47,22 @@ async function loadFile(filePath) {
 
 function showError(message) {
   contentEl.innerHTML = `<p class="error" style="color: #d32f2f; font-style: italic;">${message}</p>`;
+}
+
+async function restoreLastFile() {
+  const lastFilePath = localStorage.getItem('lastOpenedFile');
+  if (lastFilePath) {
+    try {
+      // Check if file still exists by trying to read it
+      await loadFile(lastFilePath);
+    } catch (error) {
+      console.log('Last opened file no longer accessible:', lastFilePath);
+      // Clear the stored path if file is no longer accessible
+      localStorage.removeItem('lastOpenedFile');
+      // Show default placeholder
+      contentEl.innerHTML = '<p class="placeholder">Press ⌘O or use File → Open to select a markdown file.</p>';
+    }
+  }
 }
 
 function handleKeyDown(event) {
@@ -90,6 +109,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Setup system menu
   await setupMenu();
   
-  // Also handle keyboard shortcut directly
+  // Handle keyboard shortcut directly
   document.addEventListener('keydown', handleKeyDown);
+  
+  // Restore the last opened file if available
+  await restoreLastFile();
 });
