@@ -5,11 +5,14 @@
   "type": "module",
   "scripts": {
     "tauri": "tauri",
-    "lint": "echo 'No linting configured - vanilla JS project'",
+    "lint": "biome check .",
+    "lint:fix": "biome check . --write",
+    "format": "biome format . --write",
     "dev": "npm run tauri dev",
     "build": "npm run tauri build"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.2.3",
     "@tauri-apps/cli": "^2"
   },
   "dependencies": {

@@ -11,10 +11,12 @@ async function openFile() {
     // Open file dialog to select markdown file
     const selected = await open({
       multiple: false,
-      filters: [{
-        name: 'Markdown',
-        extensions: ['md', 'markdown', 'txt']
-      }]
+      filters: [
+        {
+          name: 'Markdown',
+          extensions: ['md', 'markdown', 'txt'],
+        },
+      ],
     });
 
     if (selected) {
@@ -30,22 +32,21 @@ async function loadFile(filePath) {
   try {
     // Read file contents using Tauri command
     const content = await invoke('read_file', { path: filePath });
-    
+
     // Parse markdown and render to HTML
     const htmlContent = marked(content);
-    
+
     // Update UI
     contentEl.innerHTML = htmlContent;
-    
+
     // Add click handlers for external links
     setupLinkHandlers();
-    
+
     // Save the file path to local storage for next launch
     localStorage.setItem('lastOpenedFile', filePath);
-    
   } catch (error) {
     console.error('Error loading file:', error);
-    showError('Failed to load file: ' + error);
+    showError(`Failed to load file: ${error}`);
   }
 }
 
@@ -56,13 +57,13 @@ function showError(message) {
 function setupLinkHandlers() {
   // Find all links in the content
   const links = contentEl.querySelectorAll('a[href]');
-  
-  links.forEach(link => {
+
+  links.forEach((link) => {
     link.addEventListener('click', async (event) => {
       event.preventDefault(); // Prevent default link behavior
-      
+
       const href = link.getAttribute('href');
-      
+
       try {
         // Open the link in the system browser
         await openPath(href);
@@ -83,7 +84,7 @@ async function reloadCurrentFile() {
       console.log('File reloaded:', currentFilePath);
     } catch (error) {
       console.error('Failed to reload file:', error);
-      showError('Failed to reload file: ' + error);
+      showError(`Failed to reload file: ${error}`);
     }
   } else {
     console.log('No file to reload');
@@ -96,12 +97,13 @@ async function restoreLastFile() {
     try {
       // Check if file still exists by trying to read it
       await loadFile(lastFilePath);
-    } catch (error) {
+    } catch (_error) {
       console.log('Last opened file no longer accessible:', lastFilePath);
       // Clear the stored path if file is no longer accessible
       localStorage.removeItem('lastOpenedFile');
       // Show default placeholder
-      contentEl.innerHTML = '<p class="placeholder">Press ⌘O or use File → Open to select a markdown file.</p>';
+      contentEl.innerHTML =
+        '<p class="placeholder">Press ⌘O or use File → Open to select a markdown file.</p>';
     }
   }
 }
@@ -119,7 +121,7 @@ function handleKeyDown(event) {
 async function setupMenu() {
   try {
     const { Menu, MenuItem, Submenu } = window.__TAURI__.menu;
-    
+
     // Create File menu with Open item
     const fileMenu = await Submenu.new({
       text: 'File',
@@ -128,14 +130,14 @@ async function setupMenu() {
           id: 'open',
           text: 'Open...',
           accelerator: 'CmdOrCtrl+O',
-          action: openFile
-        })
-      ]
+          action: openFile,
+        }),
+      ],
     });
 
     // Create main menu
     const menu = await Menu.new({
-      items: [fileMenu]
+      items: [fileMenu],
     });
 
     // Set as app menu
@@ -149,13 +151,13 @@ async function setupMenu() {
 
 window.addEventListener('DOMContentLoaded', async () => {
   contentEl = document.querySelector('#content');
-  
+
   // Setup system menu
   await setupMenu();
-  
+
   // Handle keyboard shortcut directly
   document.addEventListener('keydown', handleKeyDown);
-  
+
   // Restore the last opened file if available
   await restoreLastFile();
 });

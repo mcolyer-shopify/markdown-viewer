@@ -10,7 +10,10 @@ body {
 }
 
 /* Make paragraphs and lists wider with reasonable limits */
-p, li, ul, ol {
+p,
+li,
+ul,
+ol {
   width: 80% !important;
   max-width: 1000px !important;
 }
@@ -34,7 +37,8 @@ table tr:last-child {
   border-bottom: none !important;
 }
 
-table td, table th {
+table td,
+table th {
   border: none !important;
   border-bottom: inherit !important;
   padding-top: 2px !important;
@@ -46,9 +50,13 @@ article {
   padding-top: 0 !important;
 }
 
-
 /* Tighter margins for headings */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   margin-top: 1.4rem !important;
   margin-bottom: 0.5rem !important;
 }
@@ -67,7 +75,8 @@ p {
 }
 
 /* Tighter list spacing */
-ul, ol {
+ul,
+ol {
   margin-top: 0.8rem !important;
   margin-bottom: 0.8rem !important;
 }
@@ -94,7 +103,7 @@ li {
     background-color: #1a1a1a;
     color: #e0e0e0;
   }
-  
+
   .placeholder {
     color: #777;
   }
