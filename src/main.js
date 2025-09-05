@@ -4,6 +4,254 @@ const { invoke } = window.__TAURI__.core;
 const { open } = window.__TAURI__.dialog;
 const { openPath, openUrl } = window.__TAURI__.opener;
 
+// Find/search functionality
+class FindManager {
+  constructor() {
+    this.isVisible = false;
+    this.currentSearchTerm = '';
+    this.matches = [];
+    this.currentMatchIndex = -1;
+    this.caseSensitive = false;
+    this.findBarEl = null;
+    this.findInputEl = null;
+    this.findMatchInfoEl = null;
+    this.findPreviousEl = null;
+    this.findNextEl = null;
+    this.findCaseSensitiveEl = null;
+    this.findCloseEl = null;
+  }
+
+  init() {
+    this.findBarEl = document.getElementById('find-bar');
+    this.findInputEl = document.getElementById('find-input');
+    this.findMatchInfoEl = document.getElementById('find-match-info');
+    this.findPreviousEl = document.getElementById('find-previous');
+    this.findNextEl = document.getElementById('find-next');
+    this.findCaseSensitiveEl = document.getElementById('find-case-sensitive');
+    this.findCloseEl = document.getElementById('find-close');
+
+    // Add event listeners
+    this.findInputEl.addEventListener('input', () => this.handleSearchInput());
+    this.findInputEl.addEventListener('keydown', (e) => this.handleInputKeydown(e));
+    this.findPreviousEl.addEventListener('click', () => this.findPrevious());
+    this.findNextEl.addEventListener('click', () => this.findNext());
+    this.findCaseSensitiveEl.addEventListener('click', () => this.toggleCaseSensitive());
+    this.findCloseEl.addEventListener('click', () => this.hide());
+  }
+
+  show() {
+    this.isVisible = true;
+    this.findBarEl.classList.add('visible');
+    this.findInputEl.focus();
+    this.findInputEl.select();
+  }
+
+  hide() {
+    this.isVisible = false;
+    this.findBarEl.classList.remove('visible');
+    this.clearHighlights();
+    this.currentSearchTerm = '';
+    this.matches = [];
+    this.currentMatchIndex = -1;
+    this.updateMatchInfo();
+  }
+
+  toggle() {
+    if (this.isVisible) {
+      this.hide();
+    } else {
+      this.show();
+    }
+  }
+
+  handleSearchInput() {
+    const searchTerm = this.findInputEl.value;
+    if (searchTerm !== this.currentSearchTerm) {
+      this.currentSearchTerm = searchTerm;
+      this.search();
+    }
+  }
+
+  handleInputKeydown(event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      if (event.shiftKey) {
+        this.findPrevious();
+      } else {
+        this.findNext();
+      }
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.hide();
+    }
+  }
+
+  toggleCaseSensitive() {
+    this.caseSensitive = !this.caseSensitive;
+    this.findCaseSensitiveEl.classList.toggle('active', this.caseSensitive);
+    if (this.currentSearchTerm) {
+      this.search();
+    }
+  }
+
+  search() {
+    this.clearHighlights();
+    this.matches = [];
+    this.currentMatchIndex = -1;
+
+    if (!this.currentSearchTerm) {
+      this.updateMatchInfo();
+      return;
+    }
+
+    const activeContentEl = this.getActiveContentElement();
+    if (!activeContentEl) {
+      this.updateMatchInfo();
+      return;
+    }
+
+    // Find and highlight all matches
+    this.highlightMatches(activeContentEl, this.currentSearchTerm);
+    this.updateMatchInfo();
+
+    if (this.matches.length > 0) {
+      this.currentMatchIndex = 0;
+      this.highlightCurrentMatch();
+      this.scrollToCurrentMatch();
+    }
+  }
+
+  highlightMatches(element, searchTerm) {
+    const walker = document.createTreeWalker(
+      element,
+      NodeFilter.SHOW_TEXT,
+      null,
+      false
+    );
+
+    const textNodes = [];
+    let node;
+    while ((node = walker.nextNode())) {
+      textNodes.push(node);
+    }
+
+    textNodes.forEach((textNode) => {
+      const text = textNode.textContent;
+      const regex = new RegExp(this.escapeRegExp(searchTerm), this.caseSensitive ? 'g' : 'gi');
+      const matches = [...text.matchAll(regex)];
+
+      if (matches.length > 0) {
+        const parent = textNode.parentNode;
+        const fragment = document.createDocumentFragment();
+        let lastIndex = 0;
+
+        matches.forEach((match, index) => {
+          // Add text before match
+          if (match.index > lastIndex) {
+            fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+          }
+
+          // Create highlight element
+          const highlight = document.createElement('span');
+          highlight.className = 'search-highlight';
+          highlight.textContent = match[0];
+          fragment.appendChild(highlight);
+
+          this.matches.push(highlight);
+          lastIndex = match.index + match[0].length;
+        });
+
+        // Add remaining text
+        if (lastIndex < text.length) {
+          fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+        }
+
+        parent.replaceChild(fragment, textNode);
+      }
+    });
+  }
+
+  clearHighlights() {
+    const highlights = document.querySelectorAll('.search-highlight');
+    highlights.forEach((highlight) => {
+      const parent = highlight.parentNode;
+      parent.replaceChild(document.createTextNode(highlight.textContent), highlight);
+      parent.normalize(); // Merge adjacent text nodes
+    });
+  }
+
+  highlightCurrentMatch() {
+    // Remove current class from all matches
+    this.matches.forEach((match) => {
+      match.classList.remove('current');
+    });
+
+    // Add current class to current match
+    if (this.currentMatchIndex >= 0 && this.currentMatchIndex < this.matches.length) {
+      this.matches[this.currentMatchIndex].classList.add('current');
+    }
+  }
+
+  scrollToCurrentMatch() {
+    if (this.currentMatchIndex >= 0 && this.currentMatchIndex < this.matches.length) {
+      const currentMatch = this.matches[this.currentMatchIndex];
+      currentMatch.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }
+  }
+
+  findNext() {
+    if (this.matches.length === 0) {
+      return;
+    }
+
+    this.currentMatchIndex = (this.currentMatchIndex + 1) % this.matches.length;
+    this.highlightCurrentMatch();
+    this.scrollToCurrentMatch();
+    this.updateMatchInfo();
+  }
+
+  findPrevious() {
+    if (this.matches.length === 0) {
+      return;
+    }
+
+    this.currentMatchIndex = this.currentMatchIndex <= 0 
+      ? this.matches.length - 1 
+      : this.currentMatchIndex - 1;
+    this.highlightCurrentMatch();
+    this.scrollToCurrentMatch();
+    this.updateMatchInfo();
+  }
+
+  updateMatchInfo() {
+    if (this.matches.length === 0) {
+      this.findMatchInfoEl.textContent = this.currentSearchTerm ? 'No matches' : '0 of 0';
+    } else {
+      this.findMatchInfoEl.textContent = `${this.currentMatchIndex + 1} of ${this.matches.length}`;
+    }
+  }
+
+  getActiveContentElement() {
+    const activeContent = document.querySelector('.tab-content.active');
+    return activeContent;
+  }
+
+  escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  // Called when tab switches to clear search state
+  onTabSwitch() {
+    if (this.isVisible) {
+      this.clearHighlights();
+      this.search(); // Re-search in new tab content
+    }
+  }
+}
+
 // Tab management system
 class TabManager {
   constructor() {
@@ -113,6 +361,11 @@ class TabManager {
     document.querySelectorAll('.tab-content').forEach(contentEl => {
       contentEl.classList.toggle('active', contentEl.id === `content-${tabId}`);
     });
+
+    // Notify find manager about tab switch
+    if (window.findManager) {
+      window.findManager.onTabSwitch();
+    }
 
     this.saveState();
   }
@@ -279,7 +532,8 @@ class TabManager {
   }
 }
 
-// Global tab manager instance
+// Global instances
+const findManager = new FindManager();
 const tabManager = new TabManager();
 
 // File operations
@@ -352,6 +606,23 @@ function handleKeyDown(event) {
   } else if ((event.metaKey || event.ctrlKey) && event.key === 'w') {
     event.preventDefault();
     closeCurrentTab();
+  } else if ((event.metaKey || event.ctrlKey) && event.key === 'f') {
+    event.preventDefault();
+    findManager.toggle();
+  } else if ((event.metaKey || event.ctrlKey) && event.key === 'g') {
+    event.preventDefault();
+    if (event.shiftKey) {
+      findManager.findPrevious();
+    } else {
+      findManager.findNext();
+    }
+  } else if (event.key === 'F3') {
+    event.preventDefault();
+    if (event.shiftKey) {
+      findManager.findPrevious();
+    } else {
+      findManager.findNext();
+    }
   } else if ((event.metaKey || event.ctrlKey) && /^[1-9]$/.test(event.key)) {
     event.preventDefault();
     const tabIndex = parseInt(event.key) - 1;
@@ -401,8 +672,12 @@ async function setupMenu() {
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
-  // Initialize tab manager
+  // Initialize managers
+  findManager.init();
   tabManager.init();
+
+  // Make findManager globally accessible
+  window.findManager = findManager;
 
   // Setup system menu
   await setupMenu();

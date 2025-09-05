@@ -218,6 +218,108 @@ li {
   max-width: 400px;
 }
 
+/* Find bar styles */
+.find-bar {
+  position: fixed;
+  top: 42px;
+  right: 20px;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 200;
+  display: none;
+  font-family: inherit;
+}
+
+.find-bar.visible {
+  display: block;
+}
+
+.find-controls {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  gap: 6px;
+}
+
+.find-input {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  width: 200px;
+}
+
+.find-input:focus {
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+.find-match-info {
+  font-size: 12px;
+  color: #666;
+  min-width: 50px;
+  text-align: center;
+}
+
+.find-button {
+  padding: 6px 8px;
+  border: 1px solid #e0e0e0;
+  background-color: #ffffff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  color: #666;
+  transition: all 0.2s ease;
+}
+
+.find-button:hover {
+  background-color: #f5f5f5;
+  border-color: #ccc;
+  color: #333;
+}
+
+.find-button:active {
+  background-color: #e8e8e8;
+}
+
+.find-button.active {
+  background-color: #4a90e2;
+  border-color: #4a90e2;
+  color: white;
+}
+
+.find-arrow {
+  font-size: 10px;
+}
+
+.find-case-text {
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.find-close-text {
+  font-size: 16px;
+  font-weight: normal;
+}
+
+/* Search highlighting */
+.search-highlight {
+  background-color: #ffff00;
+  color: #000;
+  padding: 1px 2px;
+  border-radius: 2px;
+}
+
+.search-highlight.current {
+  background-color: #ff8c00;
+  color: #fff;
+}
+
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
   body {
@@ -267,5 +369,58 @@ li {
     background-color: #2a2a2a;
     color: #ddd;
     border-color: #555;
+  }
+
+  /* Find bar dark mode */
+  .find-bar {
+    background-color: #2a2a2a;
+    border-color: #555;
+  }
+
+  .find-input {
+    background-color: #333;
+    border-color: #555;
+    color: #e0e0e0;
+  }
+
+  .find-input:focus {
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.3);
+  }
+
+  .find-match-info {
+    color: #aaa;
+  }
+
+  .find-button {
+    background-color: #333;
+    border-color: #555;
+    color: #aaa;
+  }
+
+  .find-button:hover {
+    background-color: #444;
+    border-color: #666;
+    color: #ddd;
+  }
+
+  .find-button:active {
+    background-color: #555;
+  }
+
+  .find-button.active {
+    background-color: #4a90e2;
+    border-color: #4a90e2;
+    color: white;
+  }
+
+  .search-highlight {
+    background-color: #b8860b;
+    color: #000;
+  }
+
+  .search-highlight.current {
+    background-color: #ff8c00;
+    color: #fff;
   }
 }
