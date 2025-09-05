@@ -4,9 +4,130 @@
   line-height: 1.8;
 }
 
+/* Tab container and bar styles */
+.tab-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.tab-bar {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  min-height: 42px;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.tab-list {
+  display: flex;
+  flex: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tab-list::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  color: #666;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  font-size: 14px;
+  max-width: 200px;
+  min-width: 120px;
+}
+
+.tab:hover {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.tab.active {
+  color: #000;
+  border-bottom-color: #333;
+  background-color: #f9f9f9;
+}
+
+.tab-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  text-align: left;
+}
+
+.tab-close {
+  margin-left: 8px;
+  padding: 2px 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  font-size: 16px;
+  line-height: 1;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+}
+
+.tab-close:hover {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.tab-add-button {
+  margin-left: 8px;
+  padding: 6px 12px;
+  background-color: transparent;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #666;
+  font-size: 18px;
+  line-height: 1;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.tab-add-button:hover {
+  background-color: #f5f5f5;
+  color: #333;
+  border-color: #ccc;
+}
+
+/* Tab content styles */
+.tab-content-container {
+  position: relative;
+}
+
+.tab-content {
+  display: none;
+  min-height: calc(100vh - 42px);
+  line-height: 1.8;
+}
+
+.tab-content.active {
+  display: block;
+}
+
 /* Extend content more to the right while keeping left margin */
 body {
   padding-right: 5% !important;
+  padding-top: 42px !important;
 }
 
 /* Make paragraphs and lists wider with reasonable limits */
@@ -106,5 +227,45 @@ li {
 
   .placeholder {
     color: #777;
+  }
+
+  .tab-container {
+    background-color: #1a1a1a;
+    border-bottom-color: #333;
+  }
+
+  .tab {
+    color: #aaa;
+  }
+
+  .tab:hover {
+    background-color: #2a2a2a;
+    color: #ddd;
+  }
+
+  .tab.active {
+    color: #e0e0e0;
+    border-bottom-color: #666;
+    background-color: #242424;
+  }
+
+  .tab-close {
+    color: #777;
+  }
+
+  .tab-close:hover {
+    background-color: #333;
+    color: #ddd;
+  }
+
+  .tab-add-button {
+    color: #aaa;
+    border-color: #333;
+  }
+
+  .tab-add-button:hover {
+    background-color: #2a2a2a;
+    color: #ddd;
+    border-color: #555;
   }
 }

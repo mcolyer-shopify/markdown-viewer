@@ -4,11 +4,282 @@ const { invoke } = window.__TAURI__.core;
 const { open } = window.__TAURI__.dialog;
 const { openPath } = window.__TAURI__.opener;
 
-let contentEl;
+// Tab management system
+class TabManager {
+  constructor() {
+    this.tabs = [];
+    this.activeTabId = null;
+    this.tabIdCounter = 0;
+    this.tabListEl = null;
+    this.tabContentContainerEl = null;
+    this.tabAddButtonEl = null;
+  }
 
+  init() {
+    this.tabListEl = document.getElementById('tab-list');
+    this.tabContentContainerEl = document.getElementById('tab-content-container');
+    this.tabAddButtonEl = document.getElementById('tab-add-button');
+
+    // Add event listeners
+    this.tabAddButtonEl.addEventListener('click', () => this.createNewTab());
+    
+    // Load persisted state
+    this.loadState();
+    
+    // If no tabs loaded, create a default tab
+    if (this.tabs.length === 0) {
+      this.createNewTab();
+    }
+  }
+
+  createNewTab(filePath = null, title = null) {
+    const tabId = `tab-${++this.tabIdCounter}`;
+    const tab = {
+      id: tabId,
+      path: filePath,
+      title: title || 'Untitled',
+      content: null
+    };
+
+    this.tabs.push(tab);
+    this.renderTab(tab);
+    this.createTabContent(tab);
+    this.switchToTab(tabId);
+
+    // If a file path is provided, load it
+    if (filePath) {
+      this.loadFileInTab(tabId, filePath);
+    }
+
+    this.saveState();
+    return tabId;
+  }
+
+  renderTab(tab) {
+    const tabEl = document.createElement('button');
+    tabEl.className = 'tab';
+    tabEl.setAttribute('data-tab-id', tab.id);
+    tabEl.title = tab.path || tab.title;
+
+    const titleEl = document.createElement('span');
+    titleEl.className = 'tab-title';
+    titleEl.textContent = tab.title;
+
+    const closeEl = document.createElement('button');
+    closeEl.className = 'tab-close';
+    closeEl.textContent = '×';
+    closeEl.title = 'Close tab';
+
+    tabEl.appendChild(titleEl);
+    tabEl.appendChild(closeEl);
+
+    // Event listeners
+    tabEl.addEventListener('click', (e) => {
+      if (!e.target.classList.contains('tab-close')) {
+        this.switchToTab(tab.id);
+      }
+    });
+
+    closeEl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.closeTab(tab.id);
+    });
+
+    this.tabListEl.appendChild(tabEl);
+  }
+
+  createTabContent(tab) {
+    const contentEl = document.createElement('section');
+    contentEl.className = 'tab-content';
+    contentEl.id = `content-${tab.id}`;
+
+    if (!tab.path) {
+      contentEl.innerHTML = '<p class="placeholder">Press ⌘O or use File → Open to select a markdown file.</p>';
+    }
+
+    this.tabContentContainerEl.appendChild(contentEl);
+  }
+
+  switchToTab(tabId) {
+    // Update active tab ID
+    this.activeTabId = tabId;
+
+    // Update tab appearances
+    document.querySelectorAll('.tab').forEach(tabEl => {
+      tabEl.classList.toggle('active', tabEl.getAttribute('data-tab-id') === tabId);
+    });
+
+    // Update content visibility
+    document.querySelectorAll('.tab-content').forEach(contentEl => {
+      contentEl.classList.toggle('active', contentEl.id === `content-${tabId}`);
+    });
+
+    this.saveState();
+  }
+
+  closeTab(tabId) {
+    const tabIndex = this.tabs.findIndex(tab => tab.id === tabId);
+    if (tabIndex === -1) return;
+
+    // Remove tab data
+    this.tabs.splice(tabIndex, 1);
+
+    // Remove DOM elements
+    const tabEl = document.querySelector(`[data-tab-id="${tabId}"]`);
+    const contentEl = document.getElementById(`content-${tabId}`);
+    
+    if (tabEl) tabEl.remove();
+    if (contentEl) contentEl.remove();
+
+    // Handle active tab change
+    if (this.activeTabId === tabId) {
+      if (this.tabs.length > 0) {
+        // Switch to the next tab, or previous if this was the last
+        const newActiveIndex = Math.min(tabIndex, this.tabs.length - 1);
+        this.switchToTab(this.tabs[newActiveIndex].id);
+      } else {
+        // Create a new empty tab if no tabs left
+        this.createNewTab();
+      }
+    }
+
+    this.saveState();
+  }
+
+  async loadFileInTab(tabId, filePath) {
+    const tab = this.tabs.find(t => t.id === tabId);
+    if (!tab) return;
+
+    try {
+      const content = await invoke('read_file', { path: filePath });
+      const htmlContent = marked(content);
+
+      // Update tab data
+      tab.path = filePath;
+      tab.title = this.extractFilename(filePath);
+      tab.content = htmlContent;
+
+      // Update tab title in UI
+      const tabEl = document.querySelector(`[data-tab-id="${tabId}"]`);
+      if (tabEl) {
+        const titleEl = tabEl.querySelector('.tab-title');
+        titleEl.textContent = tab.title;
+        tabEl.title = filePath;
+      }
+
+      // Update content
+      const contentEl = document.getElementById(`content-${tabId}`);
+      if (contentEl) {
+        contentEl.innerHTML = htmlContent;
+        this.setupLinkHandlers(contentEl);
+      }
+
+      this.saveState();
+    } catch (error) {
+      console.error('Error loading file in tab:', error);
+      this.showErrorInTab(tabId, `Failed to load file: ${error}`);
+    }
+  }
+
+  showErrorInTab(tabId, message) {
+    const contentEl = document.getElementById(`content-${tabId}`);
+    if (contentEl) {
+      contentEl.innerHTML = `<p class="error" style="color: #d32f2f; font-style: italic;">${message}</p>`;
+    }
+  }
+
+  setupLinkHandlers(contentEl) {
+    const links = contentEl.querySelectorAll('a[href]');
+    links.forEach((link) => {
+      link.addEventListener('click', async (event) => {
+        event.preventDefault();
+        const href = link.getAttribute('href');
+        try {
+          await openPath(href);
+        } catch (error) {
+          console.error('Failed to open link:', error);
+          window.open(href, '_blank');
+        }
+      });
+    });
+  }
+
+  extractFilename(filePath) {
+    return filePath.split('/').pop() || filePath.split('\\').pop() || 'Untitled';
+  }
+
+  getActiveTab() {
+    return this.tabs.find(tab => tab.id === this.activeTabId);
+  }
+
+  saveState() {
+    const state = {
+      tabs: this.tabs.map(tab => ({
+        id: tab.id,
+        path: tab.path,
+        title: tab.title
+      })),
+      activeTabId: this.activeTabId,
+      tabIdCounter: this.tabIdCounter
+    };
+    localStorage.setItem('tabManagerState', JSON.stringify(state));
+  }
+
+  loadState() {
+    try {
+      const state = JSON.parse(localStorage.getItem('tabManagerState') || '{}');
+      
+      if (state.tabs && state.tabs.length > 0) {
+        this.tabIdCounter = state.tabIdCounter || 0;
+        
+        // Recreate tabs
+        for (const tabData of state.tabs) {
+          const tab = {
+            id: tabData.id,
+            path: tabData.path,
+            title: tabData.title,
+            content: null
+          };
+          
+          this.tabs.push(tab);
+          this.renderTab(tab);
+          this.createTabContent(tab);
+          
+          // Load file if path exists
+          if (tab.path) {
+            this.loadFileInTab(tab.id, tab.path).catch(() => {
+              // If file can't be loaded, show error in tab
+              tab.path = null;
+              tab.title = 'File not found';
+              const tabEl = document.querySelector(`[data-tab-id="${tab.id}"]`);
+              if (tabEl) {
+                tabEl.querySelector('.tab-title').textContent = tab.title;
+                tabEl.title = 'File not found';
+              }
+              this.showErrorInTab(tab.id, 'File not found or no longer accessible');
+            });
+          }
+        }
+        
+        // Restore active tab
+        if (state.activeTabId && this.tabs.find(t => t.id === state.activeTabId)) {
+          this.switchToTab(state.activeTabId);
+        } else if (this.tabs.length > 0) {
+          this.switchToTab(this.tabs[0].id);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading tab state:', error);
+    }
+  }
+}
+
+// Global tab manager instance
+const tabManager = new TabManager();
+
+// File operations
 async function openFile() {
   try {
-    // Open file dialog to select markdown file
     const selected = await open({
       multiple: false,
       filters: [
@@ -20,91 +291,46 @@ async function openFile() {
     });
 
     if (selected) {
-      await loadFile(selected);
+      const activeTab = tabManager.getActiveTab();
+      if (activeTab && !activeTab.path) {
+        // Load in current empty tab
+        await tabManager.loadFileInTab(activeTab.id, selected);
+      } else {
+        // Create new tab for the file
+        tabManager.createNewTab(selected, tabManager.extractFilename(selected));
+      }
     }
   } catch (error) {
     console.error('Error opening file:', error);
-    showError('Failed to open file dialog');
+    const activeTab = tabManager.getActiveTab();
+    if (activeTab) {
+      tabManager.showErrorInTab(activeTab.id, 'Failed to open file dialog');
+    }
   }
-}
-
-async function loadFile(filePath) {
-  try {
-    // Read file contents using Tauri command
-    const content = await invoke('read_file', { path: filePath });
-
-    // Parse markdown and render to HTML
-    const htmlContent = marked(content);
-
-    // Update UI
-    contentEl.innerHTML = htmlContent;
-
-    // Add click handlers for external links
-    setupLinkHandlers();
-
-    // Save the file path to local storage for next launch
-    localStorage.setItem('lastOpenedFile', filePath);
-  } catch (error) {
-    console.error('Error loading file:', error);
-    showError(`Failed to load file: ${error}`);
-  }
-}
-
-function showError(message) {
-  contentEl.innerHTML = `<p class="error" style="color: #d32f2f; font-style: italic;">${message}</p>`;
-}
-
-function setupLinkHandlers() {
-  // Find all links in the content
-  const links = contentEl.querySelectorAll('a[href]');
-
-  links.forEach((link) => {
-    link.addEventListener('click', async (event) => {
-      event.preventDefault(); // Prevent default link behavior
-
-      const href = link.getAttribute('href');
-
-      try {
-        // Open the link in the system browser
-        await openPath(href);
-      } catch (error) {
-        console.error('Failed to open link:', error);
-        // Fallback: try to open with window.open if opener fails
-        window.open(href, '_blank');
-      }
-    });
-  });
 }
 
 async function reloadCurrentFile() {
-  const currentFilePath = localStorage.getItem('lastOpenedFile');
-  if (currentFilePath) {
+  const activeTab = tabManager.getActiveTab();
+  if (activeTab && activeTab.path) {
     try {
-      await loadFile(currentFilePath);
-      console.log('File reloaded:', currentFilePath);
+      await tabManager.loadFileInTab(activeTab.id, activeTab.path);
+      console.log('File reloaded:', activeTab.path);
     } catch (error) {
       console.error('Failed to reload file:', error);
-      showError(`Failed to reload file: ${error}`);
+      tabManager.showErrorInTab(activeTab.id, `Failed to reload file: ${error}`);
     }
   } else {
     console.log('No file to reload');
   }
 }
 
-async function restoreLastFile() {
-  const lastFilePath = localStorage.getItem('lastOpenedFile');
-  if (lastFilePath) {
-    try {
-      // Check if file still exists by trying to read it
-      await loadFile(lastFilePath);
-    } catch (_error) {
-      console.log('Last opened file no longer accessible:', lastFilePath);
-      // Clear the stored path if file is no longer accessible
-      localStorage.removeItem('lastOpenedFile');
-      // Show default placeholder
-      contentEl.innerHTML =
-        '<p class="placeholder">Press ⌘O or use File → Open to select a markdown file.</p>';
-    }
+function createNewTab() {
+  tabManager.createNewTab();
+}
+
+function closeCurrentTab() {
+  if (tabManager.activeTabId) {
+    tabManager.closeTab(tabManager.activeTabId);
   }
 }
 
@@ -115,6 +341,18 @@ function handleKeyDown(event) {
   } else if ((event.metaKey || event.ctrlKey) && event.key === 'r') {
     event.preventDefault();
     reloadCurrentFile();
+  } else if ((event.metaKey || event.ctrlKey) && event.key === 't') {
+    event.preventDefault();
+    createNewTab();
+  } else if ((event.metaKey || event.ctrlKey) && event.key === 'w') {
+    event.preventDefault();
+    closeCurrentTab();
+  } else if ((event.metaKey || event.ctrlKey) && /^[1-9]$/.test(event.key)) {
+    event.preventDefault();
+    const tabIndex = parseInt(event.key) - 1;
+    if (tabIndex < tabManager.tabs.length) {
+      tabManager.switchToTab(tabManager.tabs[tabIndex].id);
+    }
   }
 }
 
@@ -122,42 +360,48 @@ async function setupMenu() {
   try {
     const { Menu, MenuItem, Submenu } = window.__TAURI__.menu;
 
-    // Create File menu with Open item
     const fileMenu = await Submenu.new({
       text: 'File',
       items: [
+        await MenuItem.new({
+          id: 'new-tab',
+          text: 'New Tab',
+          accelerator: 'CmdOrCtrl+T',
+          action: createNewTab,
+        }),
         await MenuItem.new({
           id: 'open',
           text: 'Open...',
           accelerator: 'CmdOrCtrl+O',
           action: openFile,
         }),
+        await MenuItem.new({
+          id: 'close-tab',
+          text: 'Close Tab',
+          accelerator: 'CmdOrCtrl+W',
+          action: closeCurrentTab,
+        }),
       ],
     });
 
-    // Create main menu
     const menu = await Menu.new({
       items: [fileMenu],
     });
 
-    // Set as app menu
     await menu.setAsAppMenu();
   } catch (error) {
     console.error('Failed to setup menu:', error);
-    // Fallback: just ensure keyboard shortcut works
-    console.log('Menu setup failed, keyboard shortcut (Cmd+O) will still work');
+    console.log('Menu setup failed, keyboard shortcuts will still work');
   }
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
-  contentEl = document.querySelector('#content');
+  // Initialize tab manager
+  tabManager.init();
 
   // Setup system menu
   await setupMenu();
 
-  // Handle keyboard shortcut directly
+  // Handle keyboard shortcuts
   document.addEventListener('keydown', handleKeyDown);
-
-  // Restore the last opened file if available
-  await restoreLastFile();
 });

@@ -10,10 +10,18 @@
   </head>
 
   <body>
+    <div class="tab-container">
+      <div class="tab-bar">
+        <div class="tab-list" id="tab-list">
+          <!-- Tabs will be dynamically added here -->
+        </div>
+        <button class="tab-add-button" id="tab-add-button" title="New tab">+</button>
+      </div>
+    </div>
     <article>
-      <section id="content" class="content">
-        <p class="placeholder">Press ⌘O or use File → Open to select a markdown file.</p>
-      </section>
+      <div class="tab-content-container" id="tab-content-container">
+        <!-- Tab content will be dynamically added here -->
+      </div>
     </article>
   </body>
 </html>
