@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2025-09-04
+
+### Fixed
+- Reorganized GitHub workflows to proper `.github/workflows/` directory structure
+- Updated Claude Code configuration settings for better development workflow
+- Improved project organization and repository structure
+
+### Technical
+- Ensured all release artifacts are properly committed and synchronized
+- Updated project metadata and configuration files
+- Enhanced repository maintainability and CI/CD workflow organization
+
+## [0.2.0] - 2025-09-04
+
+### Added
+- File restoration: Remember and restore last opened file on app launch
+- Cmd+R keyboard shortcut for reloading current file
+- External link handling: Links now open in system browser automatically
+- Enhanced table styling with subtle row borders and improved cell padding
+- Improved content layout with wider text areas and better space utilization
+
+### Changed
+- Optimized placeholder centering using fixed positioning for better visual alignment
+- Extended paragraph and list widths to 80% with 1000px maximum for better readability
+- Increased table width to 90% for improved data display
+- Reduced right body padding to 5% to maximize content area
+- Added border-collapse to tables for proper border rendering
+
+### Technical Improvements
+- Integrated Tauri opener plugin for system browser link handling
+- Enhanced CSS specificity with !important rules for consistent styling
+- Added localStorage support for file path persistence
+- Improved error handling for file operations and link opening
+- Added graceful fallback for missing files on app startup
+
 ## [0.1.0] - 2025-09-04
 
 ### Added
