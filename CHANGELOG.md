@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2025-09-05
+
+### Added
+- Biome linter and formatter for consistent code style and formatting
+- JavaScript/CSS linting rules with single quotes and semicolons
+- Automated code formatting and style checking
+
+### Fixed
+- CI pipeline build failures by adding required Tauri system dependencies for Linux builds
+- JavaScript linting issues with template literals and unused variables
+- GitHub Actions workflow configuration for proper Tauri builds
+
+### Technical
+- Added `biome.json` configuration with formatting and linting rules
+- Updated CI workflow to include libgtk-3-dev, libwebkit2gtk-4.1-dev, and other required packages
+- Configured Biome to ignore third-party CSS files while maintaining code quality standards
+- Enhanced development workflow with lint and format scripts in package.json
+
 ## [0.2.1] - 2025-09-04
 
 ### Fixed
