@@ -4,7 +4,10 @@
   "version": "0.2.1",
   "type": "module",
   "scripts": {
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "lint": "echo 'No linting configured - vanilla JS project'",
+    "dev": "npm run tauri dev",
+    "build": "npm run tauri build"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2"
