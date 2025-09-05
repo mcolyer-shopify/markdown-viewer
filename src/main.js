@@ -2,7 +2,7 @@ import { marked } from 'https://cdn.jsdelivr.net/npm/marked@16.2.1/+esm';
 
 const { invoke } = window.__TAURI__.core;
 const { open } = window.__TAURI__.dialog;
-const { openPath } = window.__TAURI__.opener;
+const { openPath, openUrl } = window.__TAURI__.opener;
 
 // Tab management system
 class TabManager {
@@ -195,7 +195,12 @@ class TabManager {
         event.preventDefault();
         const href = link.getAttribute('href');
         try {
-          await openPath(href);
+          // Check if it's a URL (http/https/mailto/tel) or a file path
+          if (href.match(/^(https?|mailto|tel):/)) {
+            await openUrl(href);
+          } else {
+            await openPath(href);
+          }
         } catch (error) {
           console.error('Failed to open link:', error);
           window.open(href, '_blank');
