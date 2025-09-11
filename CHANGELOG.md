@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-09-05
+
+### Added
+- Full-text search functionality with find bar interface
+- Search highlighting with distinct current match indicator
+- Navigation between search matches with previous/next buttons
+- Case-sensitive search toggle option
+- Comprehensive keyboard shortcuts for find operations:
+  - Cmd/Ctrl+F: Open/close find bar
+  - Enter/F3: Navigate to next match
+  - Shift+Enter/Shift+F3: Navigate to previous match
+  - Cmd/Ctrl+G: Find next (when bar is open)
+  - Cmd/Ctrl+Shift+G: Find previous (when bar is open)
+  - Escape: Close find bar
+- Per-tab search state preservation
+- Smooth scrolling to center matches in viewport
+- Match counter display ("X of Y matches")
+- Dark mode support for find bar and search highlights
+
+### Changed
+- Enhanced tab management with tabbed interface and persistent state
+- Added keyboard shortcuts for tab operations (Cmd/Ctrl+T, Cmd/Ctrl+W, Cmd/Ctrl+1-9)
+- Improved link handling to distinguish between URLs and file paths
+- Updated UI layout to accommodate find bar positioning
+
+### Technical Improvements
+- Implemented FindManager class for search state management
+- Added TreeWalker API for efficient text node traversal
+- Integrated search functionality with existing tab system
+- Enhanced keyboard event handling for comprehensive shortcut support
+- Added proper highlight cleanup and DOM manipulation
+- Implemented regex-based text matching with escape handling
+
 ## [0.2.2] - 2025-09-05
 
 ### Added
