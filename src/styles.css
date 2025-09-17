@@ -89,6 +89,50 @@
   color: #333;
 }
 
+/* Drag and drop styles */
+.tab.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.tab:not(.dragging) {
+  cursor: grab;
+}
+
+.tab.drop-before {
+  position: relative;
+}
+
+.tab.drop-before::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 20px;
+  background-color: #4a90e2;
+  border-radius: 2px;
+  z-index: 10;
+}
+
+.tab.drop-after {
+  position: relative;
+}
+
+.tab.drop-after::after {
+  content: '';
+  position: absolute;
+  right: -2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 20px;
+  background-color: #4a90e2;
+  border-radius: 2px;
+  z-index: 10;
+}
+
 .tab-add-button {
   margin-left: 8px;
   padding: 6px 12px;
@@ -422,5 +466,14 @@ li {
   .search-highlight.current {
     background-color: #ff8c00;
     color: #fff;
+  }
+
+  /* Dark mode drag and drop styles */
+  .tab.drop-before::before {
+    background-color: #6bb6ff;
+  }
+
+  .tab.drop-after::after {
+    background-color: #6bb6ff;
   }
 }

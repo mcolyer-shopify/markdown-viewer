@@ -261,6 +261,10 @@ class TabManager {
     this.tabListEl = null;
     this.tabContentContainerEl = null;
     this.tabAddButtonEl = null;
+    
+    // Drag and drop state
+    this.draggedTabId = null;
+    this.dragOverIndex = -1;
   }
 
   init() {
@@ -307,6 +311,7 @@ class TabManager {
     const tabEl = document.createElement('button');
     tabEl.className = 'tab';
     tabEl.setAttribute('data-tab-id', tab.id);
+    tabEl.setAttribute('draggable', 'true');
     tabEl.title = tab.path || tab.title;
 
     const titleEl = document.createElement('span');
@@ -332,6 +337,14 @@ class TabManager {
       e.stopPropagation();
       this.closeTab(tab.id);
     });
+
+    // Drag and drop event listeners
+    tabEl.addEventListener('dragstart', (e) => this.handleDragStart(e, tab.id));
+    tabEl.addEventListener('dragover', (e) => this.handleDragOver(e));
+    tabEl.addEventListener('drop', (e) => this.handleDrop(e, tab.id));
+    tabEl.addEventListener('dragend', (e) => this.handleDragEnd(e));
+    tabEl.addEventListener('dragenter', (e) => this.handleDragEnter(e));
+    tabEl.addEventListener('dragleave', (e) => this.handleDragLeave(e));
 
     this.tabListEl.appendChild(tabEl);
   }
@@ -529,6 +542,112 @@ class TabManager {
     } catch (error) {
       console.error('Error loading tab state:', error);
     }
+  }
+
+  handleDragStart(e, tabId) {
+    this.draggedTabId = tabId;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', e.target.outerHTML);
+    e.target.classList.add('dragging');
+  }
+
+  handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    
+    const tabEl = e.currentTarget;
+    const rect = tabEl.getBoundingClientRect();
+    const midpoint = rect.left + rect.width / 2;
+    
+    // Determine if we should insert before or after this tab
+    const insertAfter = e.clientX > midpoint;
+    
+    // Remove previous drop indicators
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.classList.remove('drop-before', 'drop-after');
+    });
+    
+    // Add drop indicator
+    if (insertAfter) {
+      tabEl.classList.add('drop-after');
+    } else {
+      tabEl.classList.add('drop-before');
+    }
+  }
+
+  handleDragEnter(e) {
+    e.preventDefault();
+  }
+
+  handleDragLeave(e) {
+    // Only remove drop indicators if we're actually leaving the tab
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+      e.currentTarget.classList.remove('drop-before', 'drop-after');
+    }
+  }
+
+  handleDrop(e, targetTabId) {
+    e.preventDefault();
+    
+    if (!this.draggedTabId || this.draggedTabId === targetTabId) {
+      return;
+    }
+
+    const draggedIndex = this.tabs.findIndex(tab => tab.id === this.draggedTabId);
+    const targetIndex = this.tabs.findIndex(tab => tab.id === targetTabId);
+    
+    if (draggedIndex === -1 || targetIndex === -1) {
+      return;
+    }
+
+    // Determine insertion position based on drop indicator
+    const tabEl = e.currentTarget;
+    const rect = tabEl.getBoundingClientRect();
+    const midpoint = rect.left + rect.width / 2;
+    const insertAfter = e.clientX > midpoint;
+    
+    let newIndex = targetIndex;
+    if (insertAfter) {
+      newIndex = targetIndex + 1;
+    }
+    
+    // Adjust for the removal of the dragged tab
+    if (draggedIndex < newIndex) {
+      newIndex--;
+    }
+
+    // Reorder tabs array
+    const [draggedTab] = this.tabs.splice(draggedIndex, 1);
+    this.tabs.splice(newIndex, 0, draggedTab);
+
+    // Re-render all tabs to reflect new order
+    this.renderAllTabs();
+    
+    // Restore active tab state
+    this.switchToTab(this.activeTabId);
+    
+    // Save the new state
+    this.saveState();
+  }
+
+  handleDragEnd(e) {
+    // Clean up drag state
+    e.target.classList.remove('dragging');
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.classList.remove('drop-before', 'drop-after');
+    });
+    this.draggedTabId = null;
+    this.dragOverIndex = -1;
+  }
+
+  renderAllTabs() {
+    // Clear existing tab elements
+    this.tabListEl.innerHTML = '';
+    
+    // Re-render all tabs in the correct order
+    this.tabs.forEach(tab => {
+      this.renderTab(tab);
+    });
   }
 }
 
