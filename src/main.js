@@ -266,15 +266,32 @@ class TabManager {
     // Drag and drop state
     this.draggedTabId = null;
     this.dragOverIndex = -1;
+    
+    // Context menu state
+    this.contextMenuEl = null;
+    this.contextTabId = null;
   }
 
   init() {
     this.tabListEl = document.getElementById('tab-list');
     this.tabContentContainerEl = document.getElementById('tab-content-container');
     this.tabAddButtonEl = document.getElementById('tab-add-button');
+    this.contextMenuEl = document.getElementById('tab-context-menu');
 
     // Add event listeners
     this.tabAddButtonEl.addEventListener('click', () => this.createNewTab());
+    
+    // Context menu event listeners
+    document.getElementById('context-copy-markdown').addEventListener('click', () => this.copyMarkdown());
+    document.getElementById('context-copy-html').addEventListener('click', () => this.copyHTML());
+    document.getElementById('context-close-tab').addEventListener('click', () => this.closeContextTab());
+    
+    // Hide context menu when clicking elsewhere
+    document.addEventListener('click', (e) => {
+      if (!this.contextMenuEl.contains(e.target)) {
+        this.hideContextMenu();
+      }
+    });
     
     // Load persisted state
     this.loadState();
@@ -291,7 +308,8 @@ class TabManager {
       id: tabId,
       path: filePath,
       title: title || 'Untitled',
-      content: null
+      content: null,
+      markdownContent: null  // Store original markdown content for copying
     };
 
     this.tabs.push(tab);
@@ -346,6 +364,9 @@ class TabManager {
     tabEl.addEventListener('dragend', (e) => this.handleDragEnd(e));
     tabEl.addEventListener('dragenter', (e) => this.handleDragEnter(e));
     tabEl.addEventListener('dragleave', (e) => this.handleDragLeave(e));
+
+    // Context menu event listener
+    tabEl.addEventListener('contextmenu', (e) => this.handleTabRightClick(e, tab.id));
 
     this.tabListEl.appendChild(tabEl);
   }
@@ -425,6 +446,7 @@ class TabManager {
       tab.path = filePath;
       tab.title = this.extractFilename(filePath);
       tab.content = htmlContent;
+      tab.markdownContent = content;  // Store original markdown
 
       // Update tab title in UI
       const tabEl = document.querySelector(`[data-tab-id="${tabId}"]`);
@@ -510,7 +532,8 @@ class TabManager {
             id: tabData.id,
             path: tabData.path,
             title: tabData.title,
-            content: null
+            content: null,
+            markdownContent: null
           };
           
           this.tabs.push(tab);
@@ -649,6 +672,80 @@ class TabManager {
     this.tabs.forEach(tab => {
       this.renderTab(tab);
     });
+  }
+
+  handleTabRightClick(event, tabId) {
+    event.preventDefault();
+    this.contextTabId = tabId;
+    this.showContextMenu(event.clientX, event.clientY);
+  }
+
+  showContextMenu(x, y) {
+    this.contextMenuEl.style.left = `${x}px`;
+    this.contextMenuEl.style.top = `${y}px`;
+    this.contextMenuEl.classList.add('visible');
+
+    // Adjust position if menu would go off screen
+    const menuRect = this.contextMenuEl.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    if (menuRect.right > viewportWidth) {
+      this.contextMenuEl.style.left = `${x - menuRect.width}px`;
+    }
+    if (menuRect.bottom > viewportHeight) {
+      this.contextMenuEl.style.top = `${y - menuRect.height}px`;
+    }
+  }
+
+  hideContextMenu() {
+    this.contextMenuEl.classList.remove('visible');
+    this.contextTabId = null;
+  }
+
+  async copyMarkdown() {
+    if (!this.contextTabId) return;
+
+    const tab = this.tabs.find(t => t.id === this.contextTabId);
+    if (!tab || !tab.markdownContent) {
+      console.warn('No markdown content available to copy');
+      return;
+    }
+
+    try {
+      await invoke('plugin:clipboard-manager|write_text', { text: tab.markdownContent });
+      console.log('Markdown copied to clipboard');
+    } catch (error) {
+      console.error('Failed to copy markdown to clipboard:', error);
+    }
+
+    this.hideContextMenu();
+  }
+
+  async copyHTML() {
+    if (!this.contextTabId) return;
+
+    const tab = this.tabs.find(t => t.id === this.contextTabId);
+    if (!tab || !tab.content) {
+      console.warn('No HTML content available to copy');
+      return;
+    }
+
+    try {
+      await invoke('plugin:clipboard-manager|write_text', { text: tab.content });
+      console.log('HTML copied to clipboard');
+    } catch (error) {
+      console.error('Failed to copy HTML to clipboard:', error);
+    }
+
+    this.hideContextMenu();
+  }
+
+  closeContextTab() {
+    if (!this.contextTabId) return;
+
+    this.closeTab(this.contextTabId);
+    this.hideContextMenu();
   }
 }
 

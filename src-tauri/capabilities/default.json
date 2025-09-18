@@ -2,7 +2,9 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main"],
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
     "core:window:allow-close",
@@ -10,6 +12,8 @@
     "opener:allow-open-url",
     "opener:allow-open-path",
     "dialog:default",
-    "fs:default"
+    "fs:default",
+    "clipboard-manager:default",
+    "clipboard-manager:allow-write-text"
   ]
 }
