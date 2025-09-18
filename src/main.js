@@ -3,6 +3,7 @@ import { marked } from 'https://cdn.jsdelivr.net/npm/marked@16.2.1/+esm';
 const { invoke } = window.__TAURI__.core;
 const { open } = window.__TAURI__.dialog;
 const { openPath, openUrl } = window.__TAURI__.opener;
+const { getCurrentWindow } = window.__TAURI__.window;
 
 // Find/search functionality
 class FindManager {
@@ -725,6 +726,9 @@ function handleKeyDown(event) {
   } else if ((event.metaKey || event.ctrlKey) && event.key === 'w') {
     event.preventDefault();
     closeCurrentTab();
+  } else if ((event.metaKey || event.ctrlKey) && event.key === 'q') {
+    event.preventDefault();
+    quitApp();
   } else if ((event.metaKey || event.ctrlKey) && event.key === 'f') {
     event.preventDefault();
     findManager.toggle();
@@ -748,6 +752,15 @@ function handleKeyDown(event) {
     if (tabIndex < tabManager.tabs.length) {
       tabManager.switchToTab(tabManager.tabs[tabIndex].id);
     }
+  }
+}
+
+async function quitApp() {
+  try {
+    const currentWindow = getCurrentWindow();
+    await currentWindow.close();
+  } catch (error) {
+    console.error('Failed to quit app:', error);
   }
 }
 
@@ -775,6 +788,12 @@ async function setupMenu() {
           text: 'Close Tab',
           accelerator: 'CmdOrCtrl+W',
           action: closeCurrentTab,
+        }),
+        await MenuItem.new({
+          id: 'quit',
+          text: 'Quit',
+          accelerator: 'CmdOrCtrl+Q',
+          action: quitApp,
         }),
       ],
     });
