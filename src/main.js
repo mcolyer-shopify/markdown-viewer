@@ -33,10 +33,14 @@ class FindManager {
 
     // Add event listeners
     this.findInputEl.addEventListener('input', () => this.handleSearchInput());
-    this.findInputEl.addEventListener('keydown', (e) => this.handleInputKeydown(e));
+    this.findInputEl.addEventListener('keydown', (e) =>
+      this.handleInputKeydown(e),
+    );
     this.findPreviousEl.addEventListener('click', () => this.findPrevious());
     this.findNextEl.addEventListener('click', () => this.findNext());
-    this.findCaseSensitiveEl.addEventListener('click', () => this.toggleCaseSensitive());
+    this.findCaseSensitiveEl.addEventListener('click', () =>
+      this.toggleCaseSensitive(),
+    );
     this.findCloseEl.addEventListener('click', () => this.hide());
   }
 
@@ -127,18 +131,22 @@ class FindManager {
       element,
       NodeFilter.SHOW_TEXT,
       null,
-      false
+      false,
     );
 
     const textNodes = [];
-    let node;
-    while ((node = walker.nextNode())) {
+    let node = walker.nextNode();
+    while (node) {
       textNodes.push(node);
+      node = walker.nextNode();
     }
 
     textNodes.forEach((textNode) => {
       const text = textNode.textContent;
-      const regex = new RegExp(this.escapeRegExp(searchTerm), this.caseSensitive ? 'g' : 'gi');
+      const regex = new RegExp(
+        this.escapeRegExp(searchTerm),
+        this.caseSensitive ? 'g' : 'gi',
+      );
       const matches = [...text.matchAll(regex)];
 
       if (matches.length > 0) {
@@ -146,10 +154,12 @@ class FindManager {
         const fragment = document.createDocumentFragment();
         let lastIndex = 0;
 
-        matches.forEach((match, index) => {
+        matches.forEach((match, _index) => {
           // Add text before match
           if (match.index > lastIndex) {
-            fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+            fragment.appendChild(
+              document.createTextNode(text.slice(lastIndex, match.index)),
+            );
           }
 
           // Create highlight element
@@ -176,7 +186,10 @@ class FindManager {
     const highlights = document.querySelectorAll('.search-highlight');
     highlights.forEach((highlight) => {
       const parent = highlight.parentNode;
-      parent.replaceChild(document.createTextNode(highlight.textContent), highlight);
+      parent.replaceChild(
+        document.createTextNode(highlight.textContent),
+        highlight,
+      );
       parent.normalize(); // Merge adjacent text nodes
     });
   }
@@ -188,17 +201,23 @@ class FindManager {
     });
 
     // Add current class to current match
-    if (this.currentMatchIndex >= 0 && this.currentMatchIndex < this.matches.length) {
+    if (
+      this.currentMatchIndex >= 0 &&
+      this.currentMatchIndex < this.matches.length
+    ) {
       this.matches[this.currentMatchIndex].classList.add('current');
     }
   }
 
   scrollToCurrentMatch() {
-    if (this.currentMatchIndex >= 0 && this.currentMatchIndex < this.matches.length) {
+    if (
+      this.currentMatchIndex >= 0 &&
+      this.currentMatchIndex < this.matches.length
+    ) {
       const currentMatch = this.matches[this.currentMatchIndex];
       currentMatch.scrollIntoView({
         behavior: 'smooth',
-        block: 'center'
+        block: 'center',
       });
     }
   }
@@ -219,9 +238,10 @@ class FindManager {
       return;
     }
 
-    this.currentMatchIndex = this.currentMatchIndex <= 0 
-      ? this.matches.length - 1 
-      : this.currentMatchIndex - 1;
+    this.currentMatchIndex =
+      this.currentMatchIndex <= 0
+        ? this.matches.length - 1
+        : this.currentMatchIndex - 1;
     this.highlightCurrentMatch();
     this.scrollToCurrentMatch();
     this.updateMatchInfo();
@@ -229,7 +249,9 @@ class FindManager {
 
   updateMatchInfo() {
     if (this.matches.length === 0) {
-      this.findMatchInfoEl.textContent = this.currentSearchTerm ? 'No matches' : '0 of 0';
+      this.findMatchInfoEl.textContent = this.currentSearchTerm
+        ? 'No matches'
+        : '0 of 0';
     } else {
       this.findMatchInfoEl.textContent = `${this.currentMatchIndex + 1} of ${this.matches.length}`;
     }
@@ -262,11 +284,11 @@ class TabManager {
     this.tabListEl = null;
     this.tabContentContainerEl = null;
     this.tabAddButtonEl = null;
-    
+
     // Drag and drop state
     this.draggedTabId = null;
     this.dragOverIndex = -1;
-    
+
     // Context menu state
     this.contextMenuEl = null;
     this.contextTabId = null;
@@ -274,28 +296,36 @@ class TabManager {
 
   init() {
     this.tabListEl = document.getElementById('tab-list');
-    this.tabContentContainerEl = document.getElementById('tab-content-container');
+    this.tabContentContainerEl = document.getElementById(
+      'tab-content-container',
+    );
     this.tabAddButtonEl = document.getElementById('tab-add-button');
     this.contextMenuEl = document.getElementById('tab-context-menu');
 
     // Add event listeners
     this.tabAddButtonEl.addEventListener('click', () => this.createNewTab());
-    
+
     // Context menu event listeners
-    document.getElementById('context-copy-markdown').addEventListener('click', () => this.copyMarkdown());
-    document.getElementById('context-copy-html').addEventListener('click', () => this.copyHTML());
-    document.getElementById('context-close-tab').addEventListener('click', () => this.closeContextTab());
-    
+    document
+      .getElementById('context-copy-markdown')
+      .addEventListener('click', () => this.copyMarkdown());
+    document
+      .getElementById('context-copy-html')
+      .addEventListener('click', () => this.copyHTML());
+    document
+      .getElementById('context-close-tab')
+      .addEventListener('click', () => this.closeContextTab());
+
     // Hide context menu when clicking elsewhere (but not on right-click)
     document.addEventListener('mousedown', (e) => {
       if (e.button !== 2 && !this.contextMenuEl.contains(e.target)) {
         this.hideContextMenu();
       }
     });
-    
+
     // Load persisted state
     this.loadState();
-    
+
     // If no tabs loaded, create a default tab
     if (this.tabs.length === 0) {
       this.createNewTab();
@@ -309,7 +339,7 @@ class TabManager {
       path: filePath,
       title: title || 'Untitled',
       content: null,
-      markdownContent: null  // Store original markdown content for copying
+      markdownContent: null, // Store original markdown content for copying
     };
 
     this.tabs.push(tab);
@@ -366,7 +396,9 @@ class TabManager {
     tabEl.addEventListener('dragleave', (e) => this.handleDragLeave(e));
 
     // Context menu event listener
-    tabEl.addEventListener('contextmenu', (e) => this.handleTabRightClick(e, tab.id));
+    tabEl.addEventListener('contextmenu', (e) =>
+      this.handleTabRightClick(e, tab.id),
+    );
 
     this.tabListEl.appendChild(tabEl);
   }
@@ -377,7 +409,8 @@ class TabManager {
     contentEl.id = `content-${tab.id}`;
 
     if (!tab.path) {
-      contentEl.innerHTML = '<p class="placeholder">Press ⌘O or use File → Open to select a markdown file.</p>';
+      contentEl.innerHTML =
+        '<p class="placeholder">Press ⌘O or use File → Open to select a markdown file.</p>';
     }
 
     this.tabContentContainerEl.appendChild(contentEl);
@@ -388,12 +421,15 @@ class TabManager {
     this.activeTabId = tabId;
 
     // Update tab appearances
-    document.querySelectorAll('.tab').forEach(tabEl => {
-      tabEl.classList.toggle('active', tabEl.getAttribute('data-tab-id') === tabId);
+    document.querySelectorAll('.tab').forEach((tabEl) => {
+      tabEl.classList.toggle(
+        'active',
+        tabEl.getAttribute('data-tab-id') === tabId,
+      );
     });
 
     // Update content visibility
-    document.querySelectorAll('.tab-content').forEach(contentEl => {
+    document.querySelectorAll('.tab-content').forEach((contentEl) => {
       contentEl.classList.toggle('active', contentEl.id === `content-${tabId}`);
     });
 
@@ -406,7 +442,7 @@ class TabManager {
   }
 
   closeTab(tabId) {
-    const tabIndex = this.tabs.findIndex(tab => tab.id === tabId);
+    const tabIndex = this.tabs.findIndex((tab) => tab.id === tabId);
     if (tabIndex === -1) return;
 
     // Remove tab data
@@ -415,7 +451,7 @@ class TabManager {
     // Remove DOM elements
     const tabEl = document.querySelector(`[data-tab-id="${tabId}"]`);
     const contentEl = document.getElementById(`content-${tabId}`);
-    
+
     if (tabEl) tabEl.remove();
     if (contentEl) contentEl.remove();
 
@@ -435,7 +471,7 @@ class TabManager {
   }
 
   async loadFileInTab(tabId, filePath) {
-    const tab = this.tabs.find(t => t.id === tabId);
+    const tab = this.tabs.find((t) => t.id === tabId);
     if (!tab) return;
 
     try {
@@ -446,7 +482,7 @@ class TabManager {
       tab.path = filePath;
       tab.title = this.extractFilename(filePath);
       tab.content = htmlContent;
-      tab.markdownContent = content;  // Store original markdown
+      tab.markdownContent = content; // Store original markdown
 
       // Update tab title in UI
       const tabEl = document.querySelector(`[data-tab-id="${tabId}"]`);
@@ -499,22 +535,24 @@ class TabManager {
   }
 
   extractFilename(filePath) {
-    return filePath.split('/').pop() || filePath.split('\\').pop() || 'Untitled';
+    return (
+      filePath.split('/').pop() || filePath.split('\\').pop() || 'Untitled'
+    );
   }
 
   getActiveTab() {
-    return this.tabs.find(tab => tab.id === this.activeTabId);
+    return this.tabs.find((tab) => tab.id === this.activeTabId);
   }
 
   saveState() {
     const state = {
-      tabs: this.tabs.map(tab => ({
+      tabs: this.tabs.map((tab) => ({
         id: tab.id,
         path: tab.path,
-        title: tab.title
+        title: tab.title,
       })),
       activeTabId: this.activeTabId,
-      tabIdCounter: this.tabIdCounter
+      tabIdCounter: this.tabIdCounter,
     };
     localStorage.setItem('tabManagerState', JSON.stringify(state));
   }
@@ -522,10 +560,10 @@ class TabManager {
   loadState() {
     try {
       const state = JSON.parse(localStorage.getItem('tabManagerState') || '{}');
-      
+
       if (state.tabs && state.tabs.length > 0) {
         this.tabIdCounter = state.tabIdCounter || 0;
-        
+
         // Recreate tabs
         for (const tabData of state.tabs) {
           const tab = {
@@ -533,13 +571,13 @@ class TabManager {
             path: tabData.path,
             title: tabData.title,
             content: null,
-            markdownContent: null
+            markdownContent: null,
           };
-          
+
           this.tabs.push(tab);
           this.renderTab(tab);
           this.createTabContent(tab);
-          
+
           // Load file if path exists
           if (tab.path) {
             this.loadFileInTab(tab.id, tab.path).catch(() => {
@@ -551,13 +589,19 @@ class TabManager {
                 tabEl.querySelector('.tab-title').textContent = tab.title;
                 tabEl.title = 'File not found';
               }
-              this.showErrorInTab(tab.id, 'File not found or no longer accessible');
+              this.showErrorInTab(
+                tab.id,
+                'File not found or no longer accessible',
+              );
             });
           }
         }
-        
+
         // Restore active tab
-        if (state.activeTabId && this.tabs.find(t => t.id === state.activeTabId)) {
+        if (
+          state.activeTabId &&
+          this.tabs.find((t) => t.id === state.activeTabId)
+        ) {
           this.switchToTab(state.activeTabId);
         } else if (this.tabs.length > 0) {
           this.switchToTab(this.tabs[0].id);
@@ -578,19 +622,19 @@ class TabManager {
   handleDragOver(e) {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    
+
     const tabEl = e.currentTarget;
     const rect = tabEl.getBoundingClientRect();
     const midpoint = rect.left + rect.width / 2;
-    
+
     // Determine if we should insert before or after this tab
     const insertAfter = e.clientX > midpoint;
-    
+
     // Remove previous drop indicators
-    document.querySelectorAll('.tab').forEach(tab => {
+    document.querySelectorAll('.tab').forEach((tab) => {
       tab.classList.remove('drop-before', 'drop-after');
     });
-    
+
     // Add drop indicator
     if (insertAfter) {
       tabEl.classList.add('drop-after');
@@ -612,14 +656,16 @@ class TabManager {
 
   handleDrop(e, targetTabId) {
     e.preventDefault();
-    
+
     if (!this.draggedTabId || this.draggedTabId === targetTabId) {
       return;
     }
 
-    const draggedIndex = this.tabs.findIndex(tab => tab.id === this.draggedTabId);
-    const targetIndex = this.tabs.findIndex(tab => tab.id === targetTabId);
-    
+    const draggedIndex = this.tabs.findIndex(
+      (tab) => tab.id === this.draggedTabId,
+    );
+    const targetIndex = this.tabs.findIndex((tab) => tab.id === targetTabId);
+
     if (draggedIndex === -1 || targetIndex === -1) {
       return;
     }
@@ -629,12 +675,12 @@ class TabManager {
     const rect = tabEl.getBoundingClientRect();
     const midpoint = rect.left + rect.width / 2;
     const insertAfter = e.clientX > midpoint;
-    
+
     let newIndex = targetIndex;
     if (insertAfter) {
       newIndex = targetIndex + 1;
     }
-    
+
     // Adjust for the removal of the dragged tab
     if (draggedIndex < newIndex) {
       newIndex--;
@@ -646,10 +692,10 @@ class TabManager {
 
     // Re-render all tabs to reflect new order
     this.renderAllTabs();
-    
+
     // Restore active tab state
     this.switchToTab(this.activeTabId);
-    
+
     // Save the new state
     this.saveState();
   }
@@ -657,7 +703,7 @@ class TabManager {
   handleDragEnd(e) {
     // Clean up drag state
     e.target.classList.remove('dragging');
-    document.querySelectorAll('.tab').forEach(tab => {
+    document.querySelectorAll('.tab').forEach((tab) => {
       tab.classList.remove('drop-before', 'drop-after');
     });
     this.draggedTabId = null;
@@ -667,9 +713,9 @@ class TabManager {
   renderAllTabs() {
     // Clear existing tab elements
     this.tabListEl.innerHTML = '';
-    
+
     // Re-render all tabs in the correct order
-    this.tabs.forEach(tab => {
+    this.tabs.forEach((tab) => {
       this.renderTab(tab);
     });
   }
@@ -707,14 +753,16 @@ class TabManager {
   async copyMarkdown() {
     if (!this.contextTabId) return;
 
-    const tab = this.tabs.find(t => t.id === this.contextTabId);
+    const tab = this.tabs.find((t) => t.id === this.contextTabId);
     if (!tab || !tab.markdownContent) {
       console.warn('No markdown content available to copy');
       return;
     }
 
     try {
-      await invoke('plugin:clipboard-manager|write_text', { text: tab.markdownContent });
+      await invoke('plugin:clipboard-manager|write_text', {
+        text: tab.markdownContent,
+      });
       console.log('Markdown copied to clipboard');
     } catch (error) {
       console.error('Failed to copy markdown to clipboard:', error);
@@ -726,14 +774,16 @@ class TabManager {
   async copyHTML() {
     if (!this.contextTabId) return;
 
-    const tab = this.tabs.find(t => t.id === this.contextTabId);
+    const tab = this.tabs.find((t) => t.id === this.contextTabId);
     if (!tab || !tab.content) {
       console.warn('No HTML content available to copy');
       return;
     }
 
     try {
-      await invoke('plugin:clipboard-manager|write_text', { text: tab.content });
+      await invoke('plugin:clipboard-manager|write_text', {
+        text: tab.content,
+      });
       console.log('HTML copied to clipboard');
     } catch (error) {
       console.error('Failed to copy HTML to clipboard:', error);
@@ -788,13 +838,16 @@ async function openFile() {
 
 async function reloadCurrentFile() {
   const activeTab = tabManager.getActiveTab();
-  if (activeTab && activeTab.path) {
+  if (activeTab?.path) {
     try {
       await tabManager.loadFileInTab(activeTab.id, activeTab.path);
       console.log('File reloaded:', activeTab.path);
     } catch (error) {
       console.error('Failed to reload file:', error);
-      tabManager.showErrorInTab(activeTab.id, `Failed to reload file: ${error}`);
+      tabManager.showErrorInTab(
+        activeTab.id,
+        `Failed to reload file: ${error}`,
+      );
     }
   } else {
     console.log('No file to reload');
@@ -846,7 +899,7 @@ function handleKeyDown(event) {
     }
   } else if ((event.metaKey || event.ctrlKey) && /^[1-9]$/.test(event.key)) {
     event.preventDefault();
-    const tabIndex = parseInt(event.key) - 1;
+    const tabIndex = parseInt(event.key, 10) - 1;
     if (tabIndex < tabManager.tabs.length) {
       tabManager.switchToTab(tabManager.tabs[tabIndex].id);
     }

@@ -104,7 +104,7 @@
 }
 
 .tab.drop-before::before {
-  content: '';
+  content: "";
   position: absolute;
   left: -2px;
   top: 50%;
@@ -121,7 +121,7 @@
 }
 
 .tab.drop-after::after {
-  content: '';
+  content: "";
   position: absolute;
   right: -2px;
   top: 50%;
