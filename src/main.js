@@ -286,9 +286,9 @@ class TabManager {
     document.getElementById('context-copy-html').addEventListener('click', () => this.copyHTML());
     document.getElementById('context-close-tab').addEventListener('click', () => this.closeContextTab());
     
-    // Hide context menu when clicking elsewhere
-    document.addEventListener('click', (e) => {
-      if (!this.contextMenuEl.contains(e.target)) {
+    // Hide context menu when clicking elsewhere (but not on right-click)
+    document.addEventListener('mousedown', (e) => {
+      if (e.button !== 2 && !this.contextMenuEl.contains(e.target)) {
         this.hideContextMenu();
       }
     });
@@ -676,6 +676,7 @@ class TabManager {
 
   handleTabRightClick(event, tabId) {
     event.preventDefault();
+    event.stopPropagation();
     this.contextTabId = tabId;
     this.showContextMenu(event.clientX, event.clientY);
   }
